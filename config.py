@@ -22,6 +22,8 @@ class Settings:
     filtered_keywords: list[str]
     filtered_domains: list[str]
 
+    dry_run: bool
+
 def load_settings() -> Settings:
     required = ["REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET", "REDDIT_USERNAME", "REDDIT_PASSWORD", "REDDIT_USER_AGENT"]
     missing = [k for k in required if not os.getenv(k)]
@@ -32,6 +34,8 @@ def load_settings() -> Settings:
     if not subs:
         raise RuntimeError("TARGET_SUBREDDITS must include at least one subreddit (comma-separated).")
 
+    dry_run = os.getenv("DRY_RUN", "true").lower() == "true"
+    
     return Settings(
         client_id=os.environ["REDDIT_CLIENT_ID"],
         client_secret=os.environ["REDDIT_CLIENT_SECRET"],
@@ -41,4 +45,5 @@ def load_settings() -> Settings:
         target_subreddits=subs,
         filtered_keywords=[k.lower() for k in _csv("FILTERED_KEYWORDS")],
         filtered_domains=[d.lower() for d in _csv("FILTERED_DOMAINS")],
+        dry_run=dry_run
     )
