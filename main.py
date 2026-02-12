@@ -27,7 +27,7 @@ BOT_REPLY_TEMPLATE = (
 def handle_submission(sub: Submission, filtered_keywords: list[str], filtered_domains: list[str]) -> None:
     decision = decide_for_submission(sub, filtered_keywords, filtered_domains)
     if decision.action == "remove":
-        take_action(sub, decision, BOT_REPLY_TEMPLATE.format(reason=decision.reason))
+        take_action(sub, decision, BOT_REPLY_TEMPLATE.format(reason=decision.reason), settings.dry_run)
         log.info("Removed submission %s in r/%s (%s)", sub.id, sub.subreddit.display_name, decision.reason)
     else:
         sub.mod.approve()
@@ -36,7 +36,7 @@ def handle_submission(sub: Submission, filtered_keywords: list[str], filtered_do
 def handle_comment(c: Comment, filtered_keywords: list[str], filtered_domains: list[str]) -> None:
     decision = decide_for_comment(c, filtered_keywords, filtered_domains)
     if decision.action == "remove":
-        take_action(c, decision, BOT_REPLY_TEMPLATE.format(reason=decision.reason))
+        take_action(c, decision, BOT_REPLY_TEMPLATE.format(reason=decision.reason), settings.dry_run)
         log.info("Removed comment %s in r/%s (%s)", c.id, c.subreddit.display_name, decision.reason)
     else:
         c.mod.approve()
