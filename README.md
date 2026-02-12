@@ -16,6 +16,12 @@ A moderator-only automation tool that assists subreddit moderators by:
 - Rate-limit compliant
 - Moderator permission required
 
+## Data Handling
+
+This bot does not store Reddit content long-term.
+It processes content in-memory only for moderation checks.
+No user data is sold, shared, or retained.
+
 ## Status
 
 - v0.0.1
