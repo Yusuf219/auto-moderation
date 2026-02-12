@@ -1,34 +1,67 @@
-from config import FILTERED_KEYWORDS
+from __future__ import annotations
 
-def contains_filtered_content(text: str) -> bool:
-    if not text:
-        return False
-    
-    lower_text = text.lower()
-    for keyword in FILTERED_KEYWORDS:
-        if keyword.lower() in lower_text:
-            return True
-    
-    return False
+from dataclasses import dataclass
+from typing import Optional
 
+import praw
+from praw.models import Submission, Comment
 
-def process_item(item):
-    content = ""
-    
-    if hasattr(item, "title"):
-        content += item.title + " "
-    if hasattr(item, "selftext"):
-        content += item.selftext
-    if hasattr(item, "body"):
-        content += item.body
+@dataclass(frozen=True)
+class Decision:
+    action: str  # "approve" | "remove"
+    reason: Optional[str] = None
 
-    if contains_filtered_content(content):
-        item.mod.remove()
-        item.reply(
-            "Hello, I am a moderator bot. Your submission was removed because it "
-            "contains restricted keywords or links. Please review the subreddit rules."
-        )
-        print(f"Removed item: {item.id}")
-    else:
+def _contains_keyword(text: str, keywords: list[str]) -> Optional[str]:
+    t = (text or "").lower()
+    for kw in keywords:
+        if kw and kw in t:
+            return kw
+    return None
+
+def _contains_domain(text: str, domains: list[str]) -> Optional[str]:
+    t = (text or "").lower()
+    for d in domains:
+        if not d:
+            continue
+        # simple domain match (improve later)
+        if d in t:
+            return d
+    return None
+
+def decide_for_submission(sub: Submission, filtered_keywords: list[str], filtered_domains: list[str]) -> Decision:
+    blob = f"{sub.title or ''}\n{sub.selftext or ''}"
+    hit_kw = _contains_keyword(blob, filtered_keywords)
+    if hit_kw:
+        return Decision("remove", f"filtered keyword: '{hit_kw}'")
+
+    hit_dom = _contains_domain(blob, filtered_domains)
+    if hit_dom:
+        return Decision("remove", f"filtered domain/link: '{hit_dom}'")
+
+    return Decision("approve")
+
+def decide_for_comment(c: Comment, filtered_keywords: list[str], filtered_domains: list[str]) -> Decision:
+    blob = c.body or ""
+    hit_kw = _contains_keyword(blob, filtered_keywords)
+    if hit_kw:
+        return Decision("remove", f"filtered keyword: '{hit_kw}'")
+
+    hit_dom = _contains_domain(blob, filtered_domains)
+    if hit_dom:
+        return Decision("remove", f"filtered domain/link: '{hit_dom}'")
+
+    return Decision("approve")
+
+def take_action(item, decision: Decision, bot_reply: str) -> None:
+    # item.mod.approve/remove require mod permissions in that subreddit.
+    if decision.action == "approve":
         item.mod.approve()
-        print(f"Approved item: {item.id}")
+        return
+
+    # remove + leave transparent comment
+    item.mod.remove()
+    try:
+        item.reply(bot_reply)
+    except Exception:
+        # Reply may fail (locked threads, perms, rate limits). Removal still stands.
+        pass
