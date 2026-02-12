@@ -23,6 +23,7 @@ class Settings:
     filtered_domains: list[str]
 
     dry_run: bool
+    ignore_authors: list[str]
 
 def load_settings() -> Settings:
     required = ["REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET", "REDDIT_USERNAME", "REDDIT_PASSWORD", "REDDIT_USER_AGENT"]
@@ -46,4 +47,5 @@ def load_settings() -> Settings:
         filtered_keywords=[k.lower() for k in _csv("FILTERED_KEYWORDS")],
         filtered_domains=[d.lower() for d in _csv("FILTERED_DOMAINS")],
         dry_run=dry_run
+        ignore_authors=[a.lower() for a in _csv("IGNORE_AUTHORS")],
     )
