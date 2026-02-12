@@ -52,16 +52,17 @@ def decide_for_comment(c: Comment, filtered_keywords: list[str], filtered_domain
 
     return Decision("approve")
 
-def take_action(item, decision: Decision, bot_reply: str) -> None:
-    # item.mod.approve/remove require mod permissions in that subreddit.
+def take_action(item, decision: Decision, bot_reply: str, dry_run: bool) -> None:
+    if dry_run:
+        print(f"[DRY RUN] Would {decision.action} item {item.id} ({decision.reason})")
+        return
+
     if decision.action == "approve":
         item.mod.approve()
         return
 
-    # remove + leave transparent comment
     item.mod.remove()
     try:
         item.reply(bot_reply)
     except Exception:
-        # Reply may fail (locked threads, perms, rate limits). Removal still stands.
         pass
