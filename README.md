@@ -16,12 +16,22 @@ A moderator-only automation tool that assists subreddit moderators by:
 - Rate-limit compliant
 - Moderator permission required
 
-## Data Handling
+## Compliance & Platform Policy Alignment
 
-This bot does not store Reddit content long-term.
-It processes content in-memory only for moderation checks.
-No user data is sold, shared, or retained.
+This bot is designed to align with Reddit’s API and moderation policies:
+
+- Operates only in subreddits where the bot account has moderator permissions
+- Performs automated moderation actions only (approve/remove)
+- Does not automate engagement (no voting, no commenting outside moderation context)
+- Does not send private messages
+- Does not scrape or export Reddit data
+- Does not store data long-term
+- Processes content in-memory only (no long-term storage)
+- Respects Reddit API rate limits
+- Clearly identifies itself as a bot in removal comments
+
+The bot is intended as a moderation assistant and does not operate as a growth, marketing, or engagement automation tool.
 
 ## Status
 
-- v0.0.1
+- v0.0.2
