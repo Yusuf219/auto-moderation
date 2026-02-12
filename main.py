@@ -6,7 +6,7 @@ from threading import Thread
 
 from praw.models import Comment, Submission
 
-from .config import load_settings
+from .config import load_settings, Settings
 from .reddit_client import create_reddit
 from .moderation import (
     decide_for_comment,
@@ -24,8 +24,14 @@ BOT_REPLY_TEMPLATE = (
     "*If you believe this was a mistake, please contact the moderators.*"
 )
 
-def handle_submission(sub: Submission, filtered_keywords: list[str], filtered_domains: list[str]) -> None:
-    decision = decide_for_submission(sub, filtered_keywords, filtered_domains)
+def handle_submission(sub: Submission, settings: Settings) -> None:
+    author = getattr(sub, "author", None)
+    name = (str(author) if author else "").lower()
+    if name and name in settings.ignore_authors:
+        log.info("Skipped submission %s by ignored author %s", sub.id, name)
+        return
+
+    decision = decide_for_submission(sub, settings.filtered_keywords, settings.filtered_domains)
     if decision.action == "remove":
         take_action(sub, decision, BOT_REPLY_TEMPLATE.format(reason=decision.reason), settings.dry_run)
         log.info("Removed submission %s in r/%s (%s)", sub.id, sub.subreddit.display_name, decision.reason)
@@ -33,8 +39,14 @@ def handle_submission(sub: Submission, filtered_keywords: list[str], filtered_do
         sub.mod.approve()
         log.info("Approved submission %s in r/%s", sub.id, sub.subreddit.display_name)
 
-def handle_comment(c: Comment, filtered_keywords: list[str], filtered_domains: list[str]) -> None:
-    decision = decide_for_comment(c, filtered_keywords, filtered_domains)
+def handle_comment(c: Comment, settings: Settings) -> None:
+    author = getattr(c, "author", None)
+    name = (str(author) if author else "").lower()
+    if name and name in settings.ignore_authors:
+        log.info("Skipped comment %s by ignored author %s", c.id, name)
+        return
+
+    decision = decide_for_comment(c, settings.filtered_keywords, settings.filtered_domains)
     if decision.action == "remove":
         take_action(c, decision, BOT_REPLY_TEMPLATE.format(reason=decision.reason), settings.dry_run)
         log.info("Removed comment %s in r/%s (%s)", c.id, c.subreddit.display_name, decision.reason)
